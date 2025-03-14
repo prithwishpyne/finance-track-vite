@@ -1,61 +1,106 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./Transactions.module.css";
 import TransactionModal from "./TransactionModal";
-import { Button, Tooltip } from "@mui/material";
+import { Button, Tooltip, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import axiosInstance from "../../utils/axiosConfig";
 
-const Transactions = ({ onTransactionUpdate }) => {
+const Transactions = ({
+  onTransactionUpdate,
+  setTotalIncome,
+  setTotalExpenses,
+  setMonthlyData,
+  setExpensesByCategory,
+}) => {
   const [transactions, setTransactions] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  console.log(isLoading);
-  const [error, setError] = useState("");
-  console.log(error);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const fetchTransactions = useCallback(async () => {
-    setIsLoading(true);
-    setError("");
+  const calculateTransactions = (transactions) => {
+    const totalIncome = transactions
+      .filter((t) => t.transaction_type === "income")
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    setTotalIncome(totalIncome);
+
+    const totalExpenses = transactions
+      .filter((t) => t.transaction_type === "expense")
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    setTotalExpenses(totalExpenses);
+    // Calculate monthly data
+    const monthlyData = transactions.reduce((acc, t) => {
+      const month = new Date(t.date).toLocaleString("default", {
+        month: "short",
+      });
+      const existingMonth = acc.find((m) => m.month === month);
+
+      if (existingMonth) {
+        if (t.transaction_type === "income") existingMonth.income += t.amount;
+        else existingMonth.expenses += t.amount;
+      } else {
+        acc.push({
+          month,
+          income: t.transaction_type === "income" ? t.amount : 0,
+          expenses: t.transaction_type === "expense" ? t.amount : 0,
+        });
+      }
+      return acc;
+    }, []);
+
+    setMonthlyData(monthlyData);
+
+    // Calculate expenses by category
+    const expensesByCategory = transactions
+      .filter((t) => t.transaction_type === "expense")
+      .reduce((acc, t) => {
+        const existingCategory = acc.find(
+          (c) => c.category === t.transaction_category
+        );
+        if (existingCategory) {
+          existingCategory.amount += t.amount;
+        } else {
+          acc.push({ category: t.transaction_category, amount: t.amount });
+        }
+        return acc;
+      }, []);
+
+    setExpensesByCategory(expensesByCategory);
+  };
+
+  const fetchTransactions = async () => {
     try {
       const { data } = await axiosInstance.get("/transactions/");
       setTransactions(data);
+      calculateTransactions(data);
       onTransactionUpdate(data);
     } catch (err) {
-      setError("Failed to load transactions");
       console.error("Error:", err);
     } finally {
-      setIsLoading(false);
     }
-  }, [onTransactionUpdate]);
+  };
 
   useEffect(() => {
     fetchTransactions();
-  }, [fetchTransactions]);
+  }, []);
 
   const handleDelete = async (id) => {
     try {
       await axiosInstance.delete(`/transactions/${id}`);
       await fetchTransactions();
     } catch (err) {
-      setError("Failed to delete transaction");
       console.error("Error:", err);
     }
   };
 
   const handleModalSubmit = async (formData) => {
-    setError("");
-    setIsLoading(true);
-
     try {
       await axiosInstance.post("/transactions/", formData);
       await fetchTransactions();
       setIsModalOpen(false);
     } catch (err) {
-      setError("Failed to create transaction");
       console.error("Error:", err);
     } finally {
-      setIsLoading(false);
     }
   };
 
@@ -68,14 +113,8 @@ const Transactions = ({ onTransactionUpdate }) => {
       />
 
       <div className={styles.transactionList}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <h2>Recent Transactions</h2>
+        <div className={styles.transactionTopContainer}>
+          <h2 className={styles.recentTransactionsText}>Recent Transactions</h2>
           <Button
             onClick={() => setIsModalOpen(true)}
             variant="contained"
@@ -87,7 +126,9 @@ const Transactions = ({ onTransactionUpdate }) => {
               m: 0,
             }}
           >
-            Add New Transaction
+            <Typography className={styles.addTransactionText}>
+              Add New Transaction
+            </Typography>
           </Button>
         </div>
         <div className={styles.transactionHeader}>

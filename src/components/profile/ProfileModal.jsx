@@ -10,7 +10,6 @@ const ProfileModal = ({
   onNameChange,
   setUpdated,
 }) => {
-  console.log("isOpen", isOpen);
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [storedName, setStoredName] = useState("");
@@ -18,10 +17,7 @@ const ProfileModal = ({
   const [error, setError] = useState("");
 
   useEffect(() => {
-    console.log("Entered useEffect");
-    // Fetch the name from localStorage when component mounts, userName changes, or modal opens
     const nameFromStorage = localStorage.getItem("userName");
-    console.log(nameFromStorage);
     if (nameFromStorage) {
       setEditedName(nameFromStorage);
       setStoredName(nameFromStorage);
@@ -38,18 +34,15 @@ const ProfileModal = ({
       setIsLoading(true);
       setError("");
 
-      // Call the API to update the name
       const response = await axiosInstance.put("/users/update-name", {
         name: editedName,
       });
 
-      // Update local storage with the new name
       localStorage.setItem("userName", response.data.name);
       setStoredName(response.data.name);
       setIsEditing(false);
       setUpdated((prev) => !prev);
 
-      // Notify parent component about the name change
       if (onNameChange) {
         onNameChange(response.data.name);
       }

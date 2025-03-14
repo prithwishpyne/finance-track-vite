@@ -54,7 +54,7 @@ const NavBar = ({ userName, setUpdated }) => {
           }}
           startIcon={<AccountCircleIcon />}
         >
-          Profile
+          <Typography className={styles.profileText}>Profile</Typography>
         </Button>
         <Button
           onClick={async () => {
@@ -70,7 +70,7 @@ const NavBar = ({ userName, setUpdated }) => {
           }}
           startIcon={<LogoutIcon />}
         >
-          Logout
+          <Typography className={styles.logoutText}>Logout</Typography>
         </Button>
       </div>
       <ProfileModal

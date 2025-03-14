@@ -34,3 +34,24 @@
   display: flex;
   gap: 1rem;
 }
+
+@media (max-width: 650px) {
+  .profileText {
+    display: none;
+  }
+
+  .logoutText {
+    display: none;
+  }
+}
+
+@media (max-width: 550px) {
+  .navbar {
+    padding-right: 0;
+    padding-left: 0.5rem;
+  }
+
+  .navbarActions {
+    gap: 0;
+  }
+}

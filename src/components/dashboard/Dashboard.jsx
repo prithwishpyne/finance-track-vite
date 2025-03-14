@@ -41,12 +41,11 @@ const Dashboard = ({ userName }) => {
   const [showAssetModal, setShowAssetModal] = useState(false);
   const [showLiabilityModal, setShowLiabilityModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState({
-    totalIncome: 0,
-    totalExpenses: 0,
-    monthlyData: [],
-    expensesByCategory: [],
-  });
+  const [totalIncome, setTotalIncome] = useState(0);
+  const [totalExpenses, setTotalExpenses] = useState(0);
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [expensesByCategory, setExpensesByCategory] = useState(0);
+
   const [assets, setAssets] = useState(0);
   const [liabilities, setLiabilities] = useState(0);
   const [netWorth, setNetWorth] = useState(0);
@@ -87,62 +86,6 @@ const Dashboard = ({ userName }) => {
     setShowLiabilityModal(false);
   };
 
-  const calculateDashboardData = (transactions) => {
-    const totalIncome = transactions
-      .filter((t) => t.transaction_type === "income")
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const totalExpenses = transactions
-      .filter((t) => t.transaction_type === "expense")
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    // Calculate monthly data
-    const monthlyData = transactions.reduce((acc, t) => {
-      const month = new Date(t.date).toLocaleString("default", {
-        month: "short",
-      });
-      const existingMonth = acc.find((m) => m.month === month);
-
-      if (existingMonth) {
-        if (t.transaction_type === "income") existingMonth.income += t.amount;
-        else existingMonth.expenses += t.amount;
-      } else {
-        acc.push({
-          month,
-          income: t.transaction_type === "income" ? t.amount : 0,
-          expenses: t.transaction_type === "expense" ? t.amount : 0,
-        });
-      }
-      return acc;
-    }, []);
-
-    // Calculate expenses by category
-    const expensesByCategory = transactions
-      .filter((t) => t.transaction_type === "expense")
-      .reduce((acc, t) => {
-        const existingCategory = acc.find(
-          (c) => c.category === t.transaction_category
-        );
-        if (existingCategory) {
-          existingCategory.amount += t.amount;
-        } else {
-          acc.push({ category: t.transaction_category, amount: t.amount });
-        }
-        return acc;
-      }, []);
-
-    setDashboardData({
-      totalIncome,
-      totalExpenses,
-      monthlyData,
-      expensesByCategory,
-    });
-  };
-
-  const handleTransactionUpdate = (newTransactions) => {
-    calculateDashboardData(newTransactions);
-  };
-
   return (
     <div className={styles.dashboard}>
       {userName && (
@@ -164,7 +107,7 @@ const Dashboard = ({ userName }) => {
                 maximumFractionDigits: 2,
               })}
             </div>
-            <div style={{ display: "flex", gap: "1rem" }}>
+            <div className={styles.topButtonContainer}>
               <Button
                 startIcon={<AddIcon />}
                 onClick={() => setShowAssetModal(true)}
@@ -226,7 +169,7 @@ const Dashboard = ({ userName }) => {
             />
           ) : (
             <p className={styles.amount}>
-              {dashboardData.totalIncome.toLocaleString("en-US", {
+              {totalIncome.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
@@ -253,7 +196,7 @@ const Dashboard = ({ userName }) => {
             />
           ) : (
             <p className={styles.amount}>
-              {dashboardData.totalExpenses.toLocaleString("en-US", {
+              {totalExpenses.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
@@ -340,9 +283,9 @@ const Dashboard = ({ userName }) => {
                   height="100%"
                   sx={{ borderRadius: 2 }}
                 />
-              ) : dashboardData.monthlyData.length > 0 ? (
+              ) : monthlyData.length > 0 ? (
                 <ResponsiveContainer>
-                  <LineChart data={dashboardData.monthlyData}>
+                  <LineChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
@@ -401,11 +344,11 @@ const Dashboard = ({ userName }) => {
                   height="100%"
                   sx={{ borderRadius: 2 }}
                 />
-              ) : dashboardData.expensesByCategory.length > 0 ? (
+              ) : expensesByCategory.length > 0 ? (
                 <ResponsiveContainer>
                   <PieChart>
                     <Pie
-                      data={dashboardData.expensesByCategory}
+                      data={expensesByCategory}
                       dataKey="amount"
                       nameKey="category"
                       // cx="50%"
@@ -414,7 +357,7 @@ const Dashboard = ({ userName }) => {
                       fill="#8884d8"
                       label
                     >
-                      {dashboardData.expensesByCategory.map((entry, index) => (
+                      {expensesByCategory.map((entry, index) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={COLORS[index % COLORS.length]}
@@ -444,7 +387,12 @@ const Dashboard = ({ userName }) => {
           </div>
         </div>
       </div>
-      <Transactions onTransactionUpdate={handleTransactionUpdate} />
+      <Transactions
+        setTotalIncome={setTotalIncome}
+        setTotalExpenses={setTotalExpenses}
+        setMonthlyData={setMonthlyData}
+        setExpensesByCategory={setExpensesByCategory}
+      />
     </div>
   );
 };

@@ -46,6 +46,12 @@
   background-color: #0056b3;
 }
 
+.transactionTopContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .transactionList {
   background-color: var(--card-bg);
   color: var(--text-color);
@@ -144,5 +150,31 @@
   .transaction {
     text-align: center;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr !important;
+  }
+}
+
+@media (max-width: 550px) {
+  .headerType,
+  .transactionType,
+  .headerDate,
+  .transactionDate {
+    background-color: red;
+    display: none;
+  }
+
+  .transactionHeader {
+    grid-template-columns: 1fr 1fr 1fr !important;
+  }
+
+  .transaction {
+    grid-template-columns: 1fr 1fr 1fr !important;
+  }
+
+  .recentTransactionsText {
+    font-size: 22px;
+  }
+
+  .addTransactionText {
+    display: none;
   }
 }
